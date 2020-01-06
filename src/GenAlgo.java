@@ -1,10 +1,8 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GenAlgo {
         public static void main(String args[]){
@@ -12,11 +10,15 @@ public class GenAlgo {
             GenAlgo genAlgo=new GenAlgo();
 
             File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\003.txt");
-            int numberOfNodes=0, populationSize=100;
-            double numberOfEdges;
+            int numberOfNodes=0, populationSize=100, numberOfGenerations=100;
+            double numberOfEdges, crossoverProbability=0.5, mutationProbability;
+
 
             Map<String,Node> nodes=new HashMap<>();
             ArrayList<String> population=new ArrayList<>();
+            ArrayList<String> populationCrossOver=new ArrayList<>();
+            ArrayList<String> populationMutation=new ArrayList<>();
+            ArrayList<String> bestSolutions=new ArrayList<>();
 
             try {
                 BufferedReader bufferedReader=new BufferedReader(new FileReader(inFile));
@@ -34,28 +36,168 @@ public class GenAlgo {
             for (Map.Entry<String, Node> entry : nodes.entrySet()) {
                 System.out.println(entry.toString());
             }
+            mutationProbability=1/numberOfNodes;
             int[][] edgeMatrix=new int[numberOfNodes][numberOfNodes];
 
+            while (numberOfGenerations!=0){
 
-            for (int i=0;i<populationSize;i++){
-                String solution=genAlgo.generateSolution(numberOfNodes);
-                System.out.println(solution);
-                genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
-                genAlgo.printEdgeMatrix(edgeMatrix);
+                for (int i=0;i<populationSize;i++){
+                    String solution=genAlgo.generateSolution(numberOfNodes);
+                    genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
 
-                while (!genAlgo.isFeasible(edgeMatrix)){
-                    solution=genAlgo.repair(solution);
+                    while (!genAlgo.isFeasible(edgeMatrix)){
+                        solution=genAlgo.repair(solution, nodes);
+                        genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
+                    }
+                    population.add(solution);
                 }
 
+                for(int i=0;i<populationSize;i++){
+                    String firstParent=genAlgo.selectParent(population, nodes);
+                    String secondParent=genAlgo.selectParent(population, nodes);
+
+                    double crossOverRand=Math.random();
+                    if(crossOverRand<crossoverProbability){
+                        int crossOverPoint=(int)(Math.random()*population.get(i).length());
+                        String firstChild=firstParent.substring(0, crossOverPoint)+secondParent.substring(crossOverPoint);
+                        String secondChild=secondParent.substring(0, crossOverPoint)+firstParent.substring(crossOverPoint);
+                        populationCrossOver.add(firstChild);
+                        populationCrossOver.add(secondChild);
+                    }
+                    else{
+                        populationCrossOver.add(firstParent);
+                        populationCrossOver.add(secondParent);
+                    }
+                }
+
+                for (int i=0;i<populationSize;i++){
+                    int mutationPoint=(int)(Math.random()*populationCrossOver.get(i).length());
+                    double mutationRand=Math.random();
+                    if(mutationProbability>mutationRand){
+                        char[] solutionCharArray=populationCrossOver.get(i).toCharArray();
+                        solutionCharArray[mutationPoint]='1';
+                        populationMutation.add(String.valueOf(solutionCharArray));
+                    }
+                    else{
+                        populationMutation.add(populationCrossOver.get(i));
+                    }
+                }
+
+                for (int i=0;i<populationSize;i++){
+                    genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, populationMutation.get(i));
+                    while (!genAlgo.isFeasible(edgeMatrix)){
+                        populationMutation.set(i,genAlgo.repair(populationMutation.get(i), nodes));
+                        genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, populationMutation.get(i));
+                    }
+                }
+
+                bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes));
+
+                numberOfGenerations--;
             }
 
 
-
-
         }
-        private String repair(String solution){
+        private String getBestSolution(ArrayList<String> solutions, Map<String, Node> nodes){
+            double fitnessValues[]=new double[solutions.size()];
+            int solutionOneCount;
+            double solutionTotalWeight,totalFitnessValue=0;
 
-            return "";
+            for(int i=0;i<solutions.size();i++){
+                solutionOneCount=0;
+                solutionTotalWeight=0;
+                for (int j=0;j<solutions.get(i).length();j++) {
+                    if (solutions.get(i).charAt(j) == '1') {
+                        solutionOneCount++;
+                        solutionTotalWeight += nodes.get("" + j).getWeight();
+                    }
+                }
+                fitnessValues[i]=solutionOneCount/solutionTotalWeight;
+                totalFitnessValue+=(solutionOneCount/solutionTotalWeight);
+            }
+
+            int maxIndex = 0;
+
+            for (int i = 0; i < fitnessValues.length; i++) {
+                maxIndex = fitnessValues[i] > fitnessValues[maxIndex] ? i : maxIndex;
+            }
+
+            return solutions.get(maxIndex);
+        }
+        private String selectParent(ArrayList<String> population, Map<String, Node> nodes){
+            double fitnessValues[]=new double[population.size()];
+            double solutionTotalWeight,totalFitnessValue=0;
+            int solutionOneCount;
+            for(int i=0;i<population.size();i++){
+                solutionOneCount=0;
+                solutionTotalWeight=0;
+                for (int j=0;j<population.get(i).length();j++) {
+                    if (population.get(i).charAt(j) == '1') {
+                        solutionOneCount++;
+                        solutionTotalWeight += nodes.get("" + j).getWeight();
+                    }
+                }
+                fitnessValues[i]=solutionOneCount/solutionTotalWeight;
+                totalFitnessValue+=(solutionOneCount/solutionTotalWeight);
+            }
+            double candidate=Math.random();
+            double eachPortionSize=1/totalFitnessValue;
+            Arrays.sort(fitnessValues);
+
+            String selectedParent="";
+
+            for (int i=0;i<population.size();i++){
+                if(eachPortionSize*fitnessValues[i]>candidate)
+                    selectedParent=population.get(i);
+            }
+            return selectedParent;
+        }
+        private String repair(String solution,Map<String, Node> nodes){
+            Map<Node,Double> candidateNodes=new HashMap<>();
+            double totalFitnessValue=0;
+
+            for (int i=0;i<solution.length();i++){
+                if(solution.charAt(i)=='0'){
+                    double fitnessValue=0, numberOfDarkRoads=0;
+                    Node currentNode=nodes.get(""+i);
+
+                    for(int j=0;j<currentNode.getNeighbors().size();j++)
+                        if (solution.charAt(currentNode.getNeighbors().get(j).getLabel()) != '1')
+                            numberOfDarkRoads++;
+
+                    fitnessValue=numberOfDarkRoads/currentNode.getWeight();
+                    if(Double.isInfinite(fitnessValue))
+                        fitnessValue=Double.MAX_VALUE;
+                    if(fitnessValue!=0) {
+                        totalFitnessValue += fitnessValue;
+                        candidateNodes.put(currentNode, fitnessValue);
+                    }
+                }
+            }
+            String repairedSol="";
+            double candidate=Math.random();
+            double eachPortionSize=1/totalFitnessValue;
+            Map<Node, Double> sortedByValue=sortByValue(candidateNodes);
+
+            for (Map.Entry<Node,Double> node:sortedByValue.entrySet())
+                System.out.println(node.getKey().getLabel()+" -> "+node.getValue());
+
+            for (Map.Entry<Node,Double> node:sortedByValue.entrySet()){
+                if(eachPortionSize*node.getValue()>candidate){
+                    char[] solutionCharArray=solution.toCharArray();
+                    solutionCharArray[node.getKey().getLabel()]='1';
+                    repairedSol=String.valueOf(solutionCharArray);
+                    break;
+                }
+            }
+
+                return repairedSol;
+        }
+        private Map<Node, Double> sortByValue(Map<Node,Double> candidateNodes){
+            return candidateNodes.entrySet()
+                    .stream()
+                    .sorted((Map.Entry.<Node, Double>comparingByValue()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
         }
         private boolean isFeasible(int[][] edgeMatrix){
 
@@ -120,10 +262,10 @@ public class GenAlgo {
                     node.setWeight(Double.parseDouble(stringTokenizer.nextToken().replaceAll(",",".")));
                     nodes.put(""+i,node);
                 }
-                for (int i=0;i<(int)numberOfEdges;i++){
-                    line=bufferedReader.readLine();
+                while ((line=bufferedReader.readLine())!=null){
                     stringTokenizer=new StringTokenizer(line," ");
                     nodes.get(stringTokenizer.nextToken()).getNeighbors().add(nodes.get(stringTokenizer.nextToken()));
+
                 }
             }catch (Exception e){
                 e.printStackTrace();
