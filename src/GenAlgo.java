@@ -48,6 +48,11 @@ public class GenAlgo {
 
             while (numberOfGenerations!=0){
 
+                System.out.println("~~~~~~~~~~~~");
+                System.out.println(numberOfGenerations);
+                System.out.println("~~~~~~~~~~~~");
+
+
                 for (int i=0;i<populationSize;i++){
                     String solution=genAlgo.generateSolution(numberOfNodes);
                     genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
@@ -103,8 +108,18 @@ public class GenAlgo {
                 numberOfGenerations--;
             }
             String bestSolution=genAlgo.getBestSolution(bestSolutions, nodes, genAlgo);
-            System.out.println("Best Solution Fitness : "+genAlgo.getFitnessValueOfSolution(bestSolution, nodes));
+            System.out.println("Best Solution Weight : "+genAlgo.getWeightOfSolution(bestSolution, nodes));
 
+        }
+        private double getWeightOfSolution(String solution, Map<String, Node> nodes){
+            double solutionTotalWeight=0;
+
+            for (int i=0;i<solution.length();i++){
+                if(solution.charAt(i)=='1'){
+                    solutionTotalWeight+=nodes.get(""+i).getWeight();
+                }
+            }
+            return solutionTotalWeight;
         }
         private double getFitnessValueOfSolution(String solution, Map<String, Node> nodes){
             int solutionOneCount=0;
@@ -161,7 +176,6 @@ public class GenAlgo {
         private String repair(String solution,Map<String, Node> nodes){
             Map<Node,Double> candidateNodes=new HashMap<>();
             double totalFitnessValue=0;
-
             for (int i=0;i<solution.length();i++){
                 if(solution.charAt(i)=='0'){
                     double fitnessValue=0, numberOfDarkRoads=0;
@@ -184,9 +198,6 @@ public class GenAlgo {
             double candidate=Math.random();
             double eachPortionSize=1/totalFitnessValue;
             Map<Node, Double> sortedByValue=sortByValue(candidateNodes);
-
-            for (Map.Entry<Node,Double> node:sortedByValue.entrySet())
-                System.out.println(node.getKey().getLabel()+" -> "+node.getValue());
 
             double threshold=0;
 
@@ -251,7 +262,6 @@ public class GenAlgo {
                     for(int j=0;j<nodes.get(""+i).getNeighbors().size();j++){
                         edgeMatrix[i][nodes.get(""+i).getNeighbors().get(j).getLabel()]=1;
                         edgeMatrix[nodes.get(""+i).getNeighbors().get(j).getLabel()][i]=1;
-
                     }
                 }
             }
@@ -274,7 +284,6 @@ public class GenAlgo {
                 while ((line=bufferedReader.readLine())!=null){
                     stringTokenizer=new StringTokenizer(line," ");
                     nodes.get(stringTokenizer.nextToken()).getNeighbors().add(nodes.get(stringTokenizer.nextToken()));
-
                 }
             }catch (Exception e){
                 e.printStackTrace();
