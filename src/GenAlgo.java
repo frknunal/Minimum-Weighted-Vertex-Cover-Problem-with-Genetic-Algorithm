@@ -9,9 +9,16 @@ public class GenAlgo {
 
             GenAlgo genAlgo=new GenAlgo();
 
-            File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\003.txt");
-            int numberOfNodes=0, populationSize=100, numberOfGenerations=100;
-            double numberOfEdges, crossoverProbability=0.5, mutationProbability;
+            String nameOfTheGraph=args[0];
+            int numberOfGenerations=Integer.parseInt(args[1]);
+            int populationSize=Integer.parseInt(args[2]);
+            double crossoverProbability=Double.parseDouble(args[3]);
+            double mutationProbability=Double.parseDouble(args[4]);
+
+
+            File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\"+nameOfTheGraph+".txt");
+            int numberOfNodes=0;
+            double numberOfEdges;
 
 
             Map<String,Node> nodes=new HashMap<>();
@@ -37,7 +44,6 @@ public class GenAlgo {
             for (Map.Entry<String, Node> entry : nodes.entrySet()) {
                 System.out.println(entry.toString());
             }
-            mutationProbability=1/numberOfNodes;
             int[][] edgeMatrix=new int[numberOfNodes][numberOfNodes];
 
             while (numberOfGenerations!=0){
