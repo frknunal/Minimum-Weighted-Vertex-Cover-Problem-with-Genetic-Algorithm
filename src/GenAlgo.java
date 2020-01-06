@@ -20,6 +20,7 @@ public class GenAlgo {
             ArrayList<String> populationMutation=new ArrayList<>();
             ArrayList<String> bestSolutions=new ArrayList<>();
 
+
             try {
                 BufferedReader bufferedReader=new BufferedReader(new FileReader(inFile));
                 String line=bufferedReader.readLine();
@@ -53,8 +54,8 @@ public class GenAlgo {
                 }
 
                 for(int i=0;i<populationSize;i++){
-                    String firstParent=genAlgo.selectParent(population, nodes);
-                    String secondParent=genAlgo.selectParent(population, nodes);
+                    String firstParent=genAlgo.selectParent(population, nodes, genAlgo);
+                    String secondParent=genAlgo.selectParent(population, nodes, genAlgo);
 
                     double crossOverRand=Math.random();
                     if(crossOverRand<crossoverProbability){
@@ -91,64 +92,63 @@ public class GenAlgo {
                     }
                 }
 
-                bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes));
+                bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes, genAlgo));
 
                 numberOfGenerations--;
             }
-
+            String bestSolution=genAlgo.getBestSolution(bestSolutions, nodes, genAlgo);
+            System.out.println("Best Solution Fitness : "+genAlgo.getFitnessValueOfSolution(bestSolution, nodes));
 
         }
-        private String getBestSolution(ArrayList<String> solutions, Map<String, Node> nodes){
+        private double getFitnessValueOfSolution(String solution, Map<String, Node> nodes){
+            int solutionOneCount=0;
+            double solutionTotalWeight=0;
+
+            for (int i=0;i<solution.length();i++){
+                if(solution.charAt(i)=='1'){
+                    solutionOneCount++;
+                    solutionTotalWeight+=nodes.get(""+i).getWeight();
+                }
+            }
+            return solutionOneCount/solutionTotalWeight;
+        }
+        private int getMaxIndex(double[] list){
+            int maxIndex = 0;
+            for (int i = 0; i < list.length; i++) {
+                maxIndex = list[i] > list[maxIndex] ? i : maxIndex;
+            }
+            return maxIndex;
+        }
+        private String getBestSolution(ArrayList<String> solutions, Map<String, Node> nodes, GenAlgo genAlgo){
             double fitnessValues[]=new double[solutions.size()];
-            int solutionOneCount;
-            double solutionTotalWeight,totalFitnessValue=0;
+            double totalFitnessValue=0;
 
             for(int i=0;i<solutions.size();i++){
-                solutionOneCount=0;
-                solutionTotalWeight=0;
-                for (int j=0;j<solutions.get(i).length();j++) {
-                    if (solutions.get(i).charAt(j) == '1') {
-                        solutionOneCount++;
-                        solutionTotalWeight += nodes.get("" + j).getWeight();
-                    }
-                }
-                fitnessValues[i]=solutionOneCount/solutionTotalWeight;
-                totalFitnessValue+=(solutionOneCount/solutionTotalWeight);
+                fitnessValues[i]=genAlgo.getFitnessValueOfSolution(solutions.get(i), nodes);
+                totalFitnessValue+=fitnessValues[i];
             }
-
-            int maxIndex = 0;
-
-            for (int i = 0; i < fitnessValues.length; i++) {
-                maxIndex = fitnessValues[i] > fitnessValues[maxIndex] ? i : maxIndex;
-            }
-
-            return solutions.get(maxIndex);
+            return solutions.get(genAlgo.getMaxIndex(fitnessValues));
         }
-        private String selectParent(ArrayList<String> population, Map<String, Node> nodes){
+        private String selectParent(ArrayList<String> population, Map<String, Node> nodes, GenAlgo genAlgo){
             double fitnessValues[]=new double[population.size()];
-            double solutionTotalWeight,totalFitnessValue=0;
-            int solutionOneCount;
+            double totalFitnessValue=0;
             for(int i=0;i<population.size();i++){
-                solutionOneCount=0;
-                solutionTotalWeight=0;
-                for (int j=0;j<population.get(i).length();j++) {
-                    if (population.get(i).charAt(j) == '1') {
-                        solutionOneCount++;
-                        solutionTotalWeight += nodes.get("" + j).getWeight();
-                    }
-                }
-                fitnessValues[i]=solutionOneCount/solutionTotalWeight;
-                totalFitnessValue+=(solutionOneCount/solutionTotalWeight);
+                fitnessValues[i]=genAlgo.getFitnessValueOfSolution(population.get(i), nodes);
+                totalFitnessValue+=fitnessValues[i];
             }
             double candidate=Math.random();
             double eachPortionSize=1/totalFitnessValue;
             Arrays.sort(fitnessValues);
 
             String selectedParent="";
+            double threshold=0;
 
             for (int i=0;i<population.size();i++){
-                if(eachPortionSize*fitnessValues[i]>candidate)
-                    selectedParent=population.get(i);
+                if((threshold+(eachPortionSize*fitnessValues[i]))>candidate) {
+                    selectedParent = population.get(i);
+                    break;
+                }
+                threshold+=eachPortionSize*fitnessValues[i];
             }
             return selectedParent;
         }
@@ -182,13 +182,16 @@ public class GenAlgo {
             for (Map.Entry<Node,Double> node:sortedByValue.entrySet())
                 System.out.println(node.getKey().getLabel()+" -> "+node.getValue());
 
+            double threshold=0;
+
             for (Map.Entry<Node,Double> node:sortedByValue.entrySet()){
-                if(eachPortionSize*node.getValue()>candidate){
+                if((threshold+(eachPortionSize*node.getValue()))>candidate){
                     char[] solutionCharArray=solution.toCharArray();
                     solutionCharArray[node.getKey().getLabel()]='1';
                     repairedSol=String.valueOf(solutionCharArray);
                     break;
                 }
+                threshold+=eachPortionSize*node.getValue();
             }
 
                 return repairedSol;
