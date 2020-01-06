@@ -9,12 +9,12 @@ public class GenAlgo {
 
             GenAlgo genAlgo=new GenAlgo();
 
+
             String nameOfTheGraph=args[0];
             int numberOfGenerations=Integer.parseInt(args[1]);
             int populationSize=Integer.parseInt(args[2]);
             double crossoverProbability=Double.parseDouble(args[3]);
             double mutationProbability=Double.parseDouble(args[4]);
-
 
             File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\"+nameOfTheGraph+".txt");
             int numberOfNodes=0;
@@ -46,19 +46,22 @@ public class GenAlgo {
             for (Map.Entry<String, Node> entry : nodes.entrySet()) {
                 System.out.println(entry.toString());
             }
+
             int[][] edgeMatrix=new int[numberOfNodes][numberOfNodes];
 
 
             for (int i=0;i<populationSize;i++){
                 String solution=genAlgo.generateSolution(numberOfNodes);
-                genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
 
-                while (!genAlgo.isFeasible(edgeMatrix)){
+                while (!genAlgo.isFeasible(solution, nodes))
                     solution=genAlgo.repair(solution, nodes);
-                    genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
-                }
+                System.out.println(solution);
                 population.add(solution);
             }
+
+            for (int i=0;i<populationSize;i++)
+                System.out.println(genAlgo.isFeasible(population.get(i), nodes));
+
 
             while (numberOfGenerations!=0){
 
@@ -104,11 +107,8 @@ public class GenAlgo {
                 }
 
                 for (int i=0;i<populationSize;i++){
-                    genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, populationMutation.get(i));
-                    while (!genAlgo.isFeasible(edgeMatrix)){
-                        populationMutation.set(i,genAlgo.repair(populationMutation.get(i), nodes));
-                        genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, populationMutation.get(i));
-                    }
+                    while (!genAlgo.isFeasible(populationMutation.get(i), nodes))
+                        populationMutation.set(i, genAlgo.repair(populationMutation.get(i), nodes));
                 }
 
                 bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes, genAlgo));
@@ -132,6 +132,22 @@ public class GenAlgo {
 
             System.out.println("Best Solution Weight : "+genAlgo.getWeightOfSolution(bestSolution, nodes));
 
+        }
+        private boolean isFeasible(String solution, Map<String, Node> nodes){
+            boolean test=true;
+
+            for (int i=0;i<solution.length();i++){
+
+                if(solution.charAt(i)=='0'){
+                    for (int j=0;j<nodes.get(""+i).getNeighbors().size();j++){
+                        if(solution.charAt(nodes.get(""+i).getNeighbors().get(j).getLabel())=='0')
+                            return false;
+                    }
+
+                }
+
+            }
+            return test;
         }
         private double getWeightOfSolution(String solution, Map<String, Node> nodes){
             double solutionTotalWeight=0;
@@ -195,14 +211,22 @@ public class GenAlgo {
             }
             return selectedParent;
         }
+
+
         private String repair(String solution,Map<String, Node> nodes){
             Map<Node,Double> candidateNodes=new HashMap<>();
             double totalFitnessValue=0;
+            String repairedSol="";
             for (int i=0;i<solution.length();i++){
                 if(solution.charAt(i)=='0'){
                     double fitnessValue=0, numberOfDarkRoads=0;
                     Node currentNode=nodes.get(""+i);
-
+                    if(currentNode.getWeight()==0){
+                        char[] solutionCharArray=solution.toCharArray();
+                        solutionCharArray[currentNode.getLabel()]='1';
+                        repairedSol=String.valueOf(solutionCharArray);
+                        return repairedSol;
+                    }
                     for(int j=0;j<currentNode.getNeighbors().size();j++)
                         if (solution.charAt(currentNode.getNeighbors().get(j).getLabel()) != '1')
                             numberOfDarkRoads++;
@@ -216,7 +240,6 @@ public class GenAlgo {
                     }
                 }
             }
-            String repairedSol="";
             double candidate=Math.random();
             double eachPortionSize=1/totalFitnessValue;
             Map<Node, Double> sortedByValue=sortByValue(candidateNodes);
@@ -235,6 +258,7 @@ public class GenAlgo {
 
                 return repairedSol;
         }
+
         private Map<Node, Double> sortByValue(Map<Node,Double> candidateNodes){
             return candidateNodes.entrySet()
                     .stream()
@@ -257,13 +281,6 @@ public class GenAlgo {
                     return false;
             }
             return true;
-        }
-        private void printEdgeMatrix(int[][] edgeMatrix){
-            for (int i=0;i<edgeMatrix.length;i++){
-                for (int j=0;j<edgeMatrix.length;j++)
-                    System.out.print(edgeMatrix[i][j]);
-                System.out.println();
-            }
         }
         private String generateSolution(int numberOfNodes){
             String s="";
