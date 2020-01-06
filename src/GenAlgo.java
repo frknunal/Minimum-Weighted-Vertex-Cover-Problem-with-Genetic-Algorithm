@@ -89,17 +89,18 @@ public class GenAlgo {
                     }
                 }
 
-                for (int i=0;i<populationSize;i++){
-                    int mutationPoint=(int)(Math.random()*populationCrossOver.get(i).length());
-                    double mutationRand=Math.random();
-                    if(mutationProbability>mutationRand){
-                        char[] solutionCharArray=populationCrossOver.get(i).toCharArray();
-                        solutionCharArray[mutationPoint]='1';
-                        populationMutation.add(String.valueOf(solutionCharArray));
+                for(int i=0;i<populationSize;i++){
+                    char[] solutionCharArray=populationCrossOver.get(i).toCharArray();
+                    for (int j=0;j<populationCrossOver.get(i).length();j++){
+                        double mutationRand=Math.random();
+                        if(mutationRand<mutationProbability){
+                            if(solutionCharArray[j]=='0')
+                                solutionCharArray[j]='1';
+                            else
+                                solutionCharArray[j]='0';
+                        }
                     }
-                    else{
-                        populationMutation.add(populationCrossOver.get(i));
-                    }
+                    populationMutation.add(String.valueOf(solutionCharArray));
                 }
 
                 for (int i=0;i<populationSize;i++){
