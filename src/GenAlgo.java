@@ -26,6 +26,8 @@ public class GenAlgo {
             ArrayList<String> populationCrossOver=new ArrayList<>();
             ArrayList<String> populationMutation=new ArrayList<>();
             ArrayList<String> bestSolutions=new ArrayList<>();
+            ArrayList<String> matchingPool=new ArrayList<>();
+
 
 
             try {
@@ -64,13 +66,17 @@ public class GenAlgo {
                     population.add(solution);
                 }
 
+                for (int i=0;i<populationSize;i++)
+                    matchingPool.add(genAlgo.selectSolution(population, nodes, genAlgo));
+
+
                 for(int i=0;i<populationSize;i++){
-                    String firstParent=genAlgo.selectParent(population, nodes, genAlgo);
-                    String secondParent=genAlgo.selectParent(population, nodes, genAlgo);
+                    String firstParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);
+                    String secondParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);
 
                     double crossOverRand=Math.random();
                     if(crossOverRand<crossoverProbability){
-                        int crossOverPoint=(int)(Math.random()*population.get(i).length());
+                        int crossOverPoint=(int)(Math.random()*matchingPool.get(i).length());
                         String firstChild=firstParent.substring(0, crossOverPoint)+secondParent.substring(crossOverPoint);
                         String secondChild=secondParent.substring(0, crossOverPoint)+firstParent.substring(crossOverPoint);
                         populationCrossOver.add(firstChild);
@@ -108,6 +114,13 @@ public class GenAlgo {
                 numberOfGenerations--;
             }
             String bestSolution=genAlgo.getBestSolution(bestSolutions, nodes, genAlgo);
+
+            System.out.println("Name of the text : "+args[0]);
+            System.out.println("Generation size : "+args[1]);
+            System.out.println("Population size : "+args[2]);
+            System.out.println("Crossover prob. : "+args[3]);
+            System.out.println("Mutatin prob. : "+args[4]);
+
             System.out.println("Best Solution Weight : "+genAlgo.getWeightOfSolution(bestSolution, nodes));
 
         }
@@ -150,7 +163,7 @@ public class GenAlgo {
             }
             return solutions.get(genAlgo.getMaxIndex(fitnessValues));
         }
-        private String selectParent(ArrayList<String> population, Map<String, Node> nodes, GenAlgo genAlgo){
+        private String selectSolution(ArrayList<String> population, Map<String, Node> nodes, GenAlgo genAlgo){
             double fitnessValues[]=new double[population.size()];
             double totalFitnessValue=0;
             for(int i=0;i<population.size();i++){
