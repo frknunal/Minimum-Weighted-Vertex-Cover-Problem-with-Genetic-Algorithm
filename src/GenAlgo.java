@@ -48,6 +48,18 @@ public class GenAlgo {
             }
             int[][] edgeMatrix=new int[numberOfNodes][numberOfNodes];
 
+
+            for (int i=0;i<populationSize;i++){
+                String solution=genAlgo.generateSolution(numberOfNodes);
+                genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
+
+                while (!genAlgo.isFeasible(edgeMatrix)){
+                    solution=genAlgo.repair(solution, nodes);
+                    genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
+                }
+                population.add(solution);
+            }
+
             while (numberOfGenerations!=0){
 
                 System.out.println("~~~~~~~~~~~~");
@@ -55,22 +67,11 @@ public class GenAlgo {
                 System.out.println("~~~~~~~~~~~~");
 
 
-                for (int i=0;i<populationSize;i++){
-                    String solution=genAlgo.generateSolution(numberOfNodes);
-                    genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
-
-                    while (!genAlgo.isFeasible(edgeMatrix)){
-                        solution=genAlgo.repair(solution, nodes);
-                        genAlgo.fillEdgeMatrix(edgeMatrix, nodes, numberOfNodes, solution);
-                    }
-                    population.add(solution);
-                }
-
                 for (int i=0;i<populationSize;i++)
                     matchingPool.add(genAlgo.selectSolution(population, nodes, genAlgo));
 
 
-                for(int i=0;i<populationSize;i++){
+                for(int i=0;i<populationSize/2;i++){
                     String firstParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);
                     String secondParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);
 
@@ -110,6 +111,13 @@ public class GenAlgo {
                 }
 
                 bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes, genAlgo));
+
+
+                populationCrossOver.clear();
+                matchingPool.clear();
+                population.clear();
+                population.addAll(populationMutation);
+                populationMutation.clear();
 
                 numberOfGenerations--;
             }
