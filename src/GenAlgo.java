@@ -47,15 +47,12 @@ public class GenAlgo {
                 System.out.println(entry.toString());
             }
 
-            int[][] edgeMatrix=new int[numberOfNodes][numberOfNodes];
-
 
             for (int i=0;i<populationSize;i++){
                 String solution=genAlgo.generateSolution(numberOfNodes);
 
                 while (!genAlgo.isFeasible(solution, nodes))
                     solution=genAlgo.repair(solution, nodes);
-                System.out.println(solution);
                 population.add(solution);
             }
 
@@ -216,33 +213,46 @@ public class GenAlgo {
         private String repair(String solution,Map<String, Node> nodes){
             Map<Node,Double> candidateNodes=new HashMap<>();
             double totalFitnessValue=0;
+            int numberOfZeroWeight=0;
             String repairedSol="";
             for (int i=0;i<solution.length();i++){
                 if(solution.charAt(i)=='0'){
                     double fitnessValue=0, numberOfDarkRoads=0;
                     Node currentNode=nodes.get(""+i);
+                    /*
                     if(currentNode.getWeight()==0){
                         char[] solutionCharArray=solution.toCharArray();
                         solutionCharArray[currentNode.getLabel()]='1';
                         repairedSol=String.valueOf(solutionCharArray);
                         return repairedSol;
                     }
+                     */
                     for(int j=0;j<currentNode.getNeighbors().size();j++)
                         if (solution.charAt(currentNode.getNeighbors().get(j).getLabel()) != '1')
                             numberOfDarkRoads++;
 
                     fitnessValue=numberOfDarkRoads/currentNode.getWeight();
-                    if(Double.isInfinite(fitnessValue))
-                        fitnessValue=Double.MAX_VALUE;
                     if(fitnessValue!=0) {
-                        totalFitnessValue += fitnessValue;
-                        candidateNodes.put(currentNode, fitnessValue);
+                        if(currentNode.getWeight()==0)
+                            candidateNodes.put(currentNode, -1.0);
+                        else {
+                            totalFitnessValue += fitnessValue;
+                            candidateNodes.put(currentNode, fitnessValue);
+                        }
                     }
                 }
             }
-            double candidate=Math.random();
-            double eachPortionSize=1/totalFitnessValue;
+            double maxFitness=0, candidate=Math.random();
             Map<Node, Double> sortedByValue=sortByValue(candidateNodes);
+            for (Map.Entry<Node,Double> node:sortedByValue.entrySet())
+                maxFitness = node.getValue();
+            for (Map.Entry<Node,Double> node:sortedByValue.entrySet())
+                if(node.getValue()==-1)
+                    node.setValue(maxFitness);
+
+            totalFitnessValue=totalFitnessValue+(numberOfZeroWeight*maxFitness);
+
+            double eachPortionSize=1/totalFitnessValue;
 
             double threshold=0;
 
@@ -264,23 +274,6 @@ public class GenAlgo {
                     .stream()
                     .sorted((Map.Entry.<Node, Double>comparingByValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-        }
-        private boolean isFeasible(int[][] edgeMatrix){
-
-            boolean isFeasible;
-
-            for (int i=0;i<edgeMatrix.length;i++) {
-                isFeasible=false;
-                for (int j = 0; j < edgeMatrix.length; j++) {
-                    if (edgeMatrix[i][j] == 1) {
-                        isFeasible = true;
-                        break;
-                    }
-                }
-                if(!isFeasible)
-                    return false;
-            }
-            return true;
         }
         private String generateSolution(int numberOfNodes){
             String s="";
