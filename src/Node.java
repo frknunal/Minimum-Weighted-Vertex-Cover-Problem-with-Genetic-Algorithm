@@ -1,10 +1,10 @@
 import java.util.ArrayList;
 
-public class Node {
+public class Node {     // node class
 
-    private int label;
-    private double weight;
-    private ArrayList<Node> neighbors;
+    private int label;      // unique identifier
+    private double weight;  // weight
+    private ArrayList<Node> neighbors;  // neighbor list
 
 
     public Node() {
