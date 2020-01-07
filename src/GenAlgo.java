@@ -7,125 +7,134 @@ import java.util.stream.Collectors;
 public class GenAlgo {
         public static void main(String args[]){
 
-            GenAlgo genAlgo=new GenAlgo();
+            GenAlgo genAlgo=new GenAlgo();  // Gen Algo class to use non-static methods
 
 
-            String nameOfTheGraph=args[0];
-            int numberOfGenerations=Integer.parseInt(args[1]);
-            int populationSize=Integer.parseInt(args[2]);
-            double crossoverProbability=Double.parseDouble(args[3]);
-            double mutationProbability=Double.parseDouble(args[4]);
+            String nameOfTheGraph=args[0];                          // first argument of command line, graph name
+            int numberOfGenerations=Integer.parseInt(args[1]);      // second argument of command line, number of generations
+            int populationSize=Integer.parseInt(args[2]);           // third argument of command line, population size
+            double crossoverProbability=Double.parseDouble(args[3]);    // fourth argument of command line, crossover probability
+            double mutationProbability=Double.parseDouble(args[4]);     // fifth argument of command line, mutation probability
 
-            File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\"+nameOfTheGraph+".txt");
-            int numberOfNodes=0;
-            double numberOfEdges;
+            File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\"+nameOfTheGraph+".txt");  // create file to be open
+            int numberOfNodes=0;        // number of nodes will be written from text file
+            double numberOfEdges;       // number of edge will be written from text file
 
 
-            Map<String,Node> nodes=new HashMap<>();
-            ArrayList<String> population=new ArrayList<>();
-            ArrayList<String> populationCrossOver=new ArrayList<>();
-            ArrayList<String> populationMutation=new ArrayList<>();
-            ArrayList<String> bestSolutions=new ArrayList<>();
-            ArrayList<String> matchingPool=new ArrayList<>();
+            Map<String,Node> nodes=new HashMap<>();             // all nodes in graph
+            ArrayList<String> population=new ArrayList<>();     // population list
+            ArrayList<String> populationCrossOver=new ArrayList<>();    // population list after crossover
+            ArrayList<String> populationMutation=new ArrayList<>();     // population list after mutation
+            ArrayList<String> bestSolutions=new ArrayList<>();          // best solution of every generation
+            ArrayList<String> matchingPool=new ArrayList<>();           // matching pool list
 
 
 
             try {
-                BufferedReader bufferedReader=new BufferedReader(new FileReader(inFile));
-                String line=bufferedReader.readLine();
-                numberOfNodes=Integer.parseInt(line);
-                line=bufferedReader.readLine();
-                numberOfEdges=Double.parseDouble(line);
+                BufferedReader bufferedReader=new BufferedReader(new FileReader(inFile));       // reader to read file
+                String line=bufferedReader.readLine();                      // read first line of the file
+                numberOfNodes=Integer.parseInt(line);                       // first line is number of nodes
+                line=bufferedReader.readLine();                             // read second line of the file
+                numberOfEdges=Double.parseDouble(line);                     // second line is number of edges
 
-                genAlgo.generateNodes(nodes, bufferedReader, numberOfNodes, numberOfEdges);
+                genAlgo.generateNodes(nodes, bufferedReader, numberOfNodes, numberOfEdges);     // generates all nodes, and add to nodes hashmap
 
             }catch (Exception e){
                 e.printStackTrace();
             }
 
             for (Map.Entry<String, Node> entry : nodes.entrySet()) {
-                System.out.println(entry.toString());
+                System.out.println(entry.toString());                   // print all nodes, debug purposes
             }
 
 
-            for (int i=0;i<populationSize;i++){
-                String solution=genAlgo.generateSolution(numberOfNodes);
+            for (int i=0;i<populationSize;i++){           // generate solution population times
+                String solution=genAlgo.generateSolution(numberOfNodes);    // generate solution
 
-                while (!genAlgo.isFeasible(solution, nodes))
-                    solution=genAlgo.repair(solution, nodes);
-                population.add(solution);
+                while (!genAlgo.isFeasible(solution, nodes))        // check feasibility of the solution and repair until it becomes feasible
+                    solution=genAlgo.repair(solution, nodes);       // repair solution
+                population.add(solution);                           // add solution to population list
             }
 
             for (int i=0;i<populationSize;i++)
-                System.out.println(genAlgo.isFeasible(population.get(i), nodes));
+                System.out.println(genAlgo.isFeasible(population.get(i), nodes));   // print feasibility of all solutions, debug purposes
 
 
-            while (numberOfGenerations!=0){
+            while (numberOfGenerations!=0){         // loop over number of generations
 
                 System.out.println("~~~~~~~~~~~~");
-                System.out.println(numberOfGenerations);
-                System.out.println("~~~~~~~~~~~~");
+                System.out.println(numberOfGenerations);        // print current generation number
 
 
-                for (int i=0;i<populationSize;i++)
+                for (int i=0;i<populationSize;i++)              // select solution from population list and add to matching pool list
                     matchingPool.add(genAlgo.selectSolution(population, nodes, genAlgo));
 
+                /*   Crossover   */
+                for(int i=0;i<populationSize/2;i++){            // select from matching pool and add to crossover population list, each loop we add two solution to crossover list so loop over half of the  population size
+                    String firstParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);    // select first parent
+                    String secondParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);   // select second parent
 
-                for(int i=0;i<populationSize/2;i++){
-                    String firstParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);
-                    String secondParent=genAlgo.selectSolution(matchingPool, nodes, genAlgo);
-
-                    double crossOverRand=Math.random();
-                    if(crossOverRand<crossoverProbability){
-                        int crossOverPoint=(int)(Math.random()*matchingPool.get(i).length());
-                        String firstChild=firstParent.substring(0, crossOverPoint)+secondParent.substring(crossOverPoint);
-                        String secondChild=secondParent.substring(0, crossOverPoint)+firstParent.substring(crossOverPoint);
-                        populationCrossOver.add(firstChild);
-                        populationCrossOver.add(secondChild);
+                    double crossOverRand=Math.random();     // generate random number for crossover probability
+                    if(crossOverRand<crossoverProbability){     //  do crossover
+                        int crossOverPoint=(int)(Math.random()*matchingPool.get(i).length());   // select crossover point
+                        String firstChild=firstParent.substring(0, crossOverPoint)+secondParent.substring(crossOverPoint);  // generate first child
+                        String secondChild=secondParent.substring(0, crossOverPoint)+firstParent.substring(crossOverPoint); // generate second child
+                        populationCrossOver.add(firstChild);        // add first child to crossover population list
+                        populationCrossOver.add(secondChild);       // add second child to crossover population list
                     }
-                    else{
-                        populationCrossOver.add(firstParent);
-                        populationCrossOver.add(secondParent);
+                    else{               // do not crossover
+                        populationCrossOver.add(firstParent);   // add first parent to crossover population list
+                        populationCrossOver.add(secondParent);  // add second parent to crossover population list
                     }
                 }
 
-                for(int i=0;i<populationSize;i++){
-                    char[] solutionCharArray=populationCrossOver.get(i).toCharArray();
-                    for (int j=0;j<populationCrossOver.get(i).length();j++){
-                        double mutationRand=Math.random();
-                        if(mutationRand<mutationProbability){
-                            if(solutionCharArray[j]=='0')
+                /*   Mutation   */
+                for(int i=0;i<populationSize;i++){          // try to mutate each bit of every solution
+                    char[] solutionCharArray=populationCrossOver.get(i).toCharArray();  // generate char array from solution
+                    for (int j=0;j<populationCrossOver.get(i).length();j++){        // loop over each bit of the current solution
+                        double mutationRand=Math.random();          // generate random number for  mutation
+                        if(mutationRand<mutationProbability){       // do mutation
+                            if(solutionCharArray[j]=='0')           // bitwise mutation
                                 solutionCharArray[j]='1';
                             else
                                 solutionCharArray[j]='0';
                         }
                     }
-                    populationMutation.add(String.valueOf(solutionCharArray));
+                    populationMutation.add(String.valueOf(solutionCharArray));      // add current solution to population mutation list
                 }
 
-                for (int i=0;i<populationSize;i++){
-                    while (!genAlgo.isFeasible(populationMutation.get(i), nodes))
+                for (int i=0;i<populationSize;i++){         // check feasibility of population after mutation
+                    while (!genAlgo.isFeasible(populationMutation.get(i), nodes))      // repair until becomes feasible, if not feasible
                         populationMutation.set(i, genAlgo.repair(populationMutation.get(i), nodes));
                 }
 
-                bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes, genAlgo));
+                bestSolutions.add(genAlgo.getBestSolution(populationMutation, nodes, genAlgo));     // add best solution from current generation to best solution list
 
+                double totalFitnessOfGeneration=0, averageFitnessOfGeneration;
 
-                populationCrossOver.clear();
-                matchingPool.clear();
-                population.clear();
-                population.addAll(populationMutation);
-                populationMutation.clear();
+                for(int i=0;i<populationMutation.size();i++) {
+                    totalFitnessOfGeneration += genAlgo.getFitnessValueOfSolution(populationMutation.get(i), nodes);
+                }
+                averageFitnessOfGeneration=totalFitnessOfGeneration/populationMutation.size();
+                System.out.println("Average Fitness -> "+averageFitnessOfGeneration);
+                System.out.println("~~~~~~~~~~~~");
 
-                numberOfGenerations--;
+                populationCrossOver.clear();        // clear list
+                matchingPool.clear();               // clear list
+                population.clear();                 // clear list
+                population.addAll(populationMutation);  // generated generation is new population for next generation so add to population list
+                populationMutation.clear();         // clear list
+
+                numberOfGenerations--;          // decrease number of generations
             }
-            String bestSolution=genAlgo.getBestSolution(bestSolutions, nodes, genAlgo);
+            String bestSolution=genAlgo.getBestSolution(bestSolutions, nodes, genAlgo);     // get best solution among all generations
 
+            /*    print parameters      */
             System.out.println("Name of the text : "+args[0]);
             System.out.println("Generation size : "+args[1]);
             System.out.println("Population size : "+args[2]);
             System.out.println("Crossover prob. : "+args[3]);
-            System.out.println("Mutatin prob. : "+args[4]);
+            System.out.println("Mutation prob. : "+args[4]);
 
             System.out.println("Best Solution Weight : "+genAlgo.getWeightOfSolution(bestSolution, nodes));
 
