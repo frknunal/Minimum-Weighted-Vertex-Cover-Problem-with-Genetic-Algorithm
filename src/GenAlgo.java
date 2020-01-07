@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -9,12 +10,15 @@ public class GenAlgo {
 
             GenAlgo genAlgo=new GenAlgo();  // Gen Algo class to use non-static methods
 
+            Map<Integer, Double> generationAverageFitness=new HashMap<>();  // save generation average fitness and export to text file to create graph
 
             String nameOfTheGraph=args[0];                          // first argument of command line, graph name
             int numberOfGenerations=Integer.parseInt(args[1]);      // second argument of command line, number of generations
             int populationSize=Integer.parseInt(args[2]);           // third argument of command line, population size
             double crossoverProbability=Double.parseDouble(args[3]);    // fourth argument of command line, crossover probability
             double mutationProbability=Double.parseDouble(args[4]);     // fifth argument of command line, mutation probability
+
+            int totalNumberOfGeneration=numberOfGenerations;    // save number of generation to save map
 
             File inFile=new File("C:\\Users\\unal\\Desktop\\Java\\Minimum-Weighted-Vertex-Cover-Problem-with-Genetic-Algorithm\\src\\"+nameOfTheGraph+".txt");  // create file to be open
             int numberOfNodes=0;        // number of nodes will be written from text file
@@ -112,11 +116,12 @@ public class GenAlgo {
 
                 double totalFitnessOfGeneration=0, averageFitnessOfGeneration;
 
-                for(int i=0;i<populationMutation.size();i++) {
+                for(int i=0;i<populationMutation.size();i++) {      // sum all fitness values of current generation
                     totalFitnessOfGeneration += genAlgo.getFitnessValueOfSolution(populationMutation.get(i), nodes);
                 }
-                averageFitnessOfGeneration=totalFitnessOfGeneration/populationMutation.size();
+                averageFitnessOfGeneration=totalFitnessOfGeneration/populationMutation.size();  // average fitness of current generation
                 System.out.println("Average Fitness -> "+averageFitnessOfGeneration);
+                generationAverageFitness.put(totalNumberOfGeneration-numberOfGenerations, averageFitnessOfGeneration);
                 System.out.println("~~~~~~~~~~~~");
 
                 populationCrossOver.clear();        // clear list
@@ -138,6 +143,19 @@ public class GenAlgo {
 
             System.out.println("Best Solution Weight : "+genAlgo.getWeightOfSolution(bestSolution, nodes));
 
+            try {
+                PrintWriter writer = new PrintWriter("the-file-name.txt", "UTF_8");
+                String s="";
+                for (Map.Entry<Integer,Double> node:generationAverageFitness.entrySet()){
+                    s+=node.getKey()+" "+node.getValue();
+                    writer.println(s);
+                    s="";
+                }
+                    writer.close();
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
         private boolean isFeasible(String solution, Map<String, Node> nodes){
             boolean test=true;
@@ -228,14 +246,7 @@ public class GenAlgo {
                 if(solution.charAt(i)=='0'){
                     double fitnessValue=0, numberOfDarkRoads=0;
                     Node currentNode=nodes.get(""+i);
-                    /*
-                    if(currentNode.getWeight()==0){
-                        char[] solutionCharArray=solution.toCharArray();
-                        solutionCharArray[currentNode.getLabel()]='1';
-                        repairedSol=String.valueOf(solutionCharArray);
-                        return repairedSol;
-                    }
-                     */
+
                     for(int j=0;j<currentNode.getNeighbors().size();j++)
                         if (solution.charAt(currentNode.getNeighbors().get(j).getLabel()) != '1')
                             numberOfDarkRoads++;
