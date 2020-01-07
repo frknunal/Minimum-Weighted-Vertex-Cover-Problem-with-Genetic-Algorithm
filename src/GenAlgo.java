@@ -144,7 +144,7 @@ public class GenAlgo {
             System.out.println("Best Solution Weight : "+genAlgo.getWeightOfSolution(bestSolution, nodes));
 
             try {
-                PrintWriter writer = new PrintWriter("the-file-name.txt", "UTF_8");
+                PrintWriter writer = new PrintWriter("g1.txt", "UTF_8");
                 String s="";
                 for (Map.Entry<Integer,Double> node:generationAverageFitness.entrySet()){
                     s+=node.getKey()+" "+node.getValue();
